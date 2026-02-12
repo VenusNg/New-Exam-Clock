@@ -74,11 +74,17 @@
     }
     
     button:hover {
+      background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
       transform: translateY(-2px);
     }
     
     button:active {
       transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     
     .display {
@@ -109,6 +115,7 @@
       color: #764ba2;
       font-weight: bold;
       margin: 15px 0;
+      min-height: 25px;
     }
     
     #info {
@@ -116,6 +123,7 @@
       color: #999;
       margin-top: 15px;
       word-break: break-word;
+      min-height: 40px;
     }
   </style>
 </head>
@@ -123,7 +131,7 @@
   <div class="container">
     <h1>📝 Exam Clock</h1>
     
-    <div>
+    <div class="inputs-section">
       <div class="input-group">
         <label for="startTime">Start Time (HH:MM):</label>
         <input type="time" id="startTime" value="09:00">
@@ -154,7 +162,6 @@
     let start, readingEnd, examEnd, halfway, fifteenBeforeEnd;
     let timerInterval;
 
-    // Wait for page to fully load
     document.addEventListener('DOMContentLoaded', function() {
       
       function pad(n) {
@@ -176,40 +183,13 @@
         return pad(h) + ':' + pad(m) + ':' + pad(s);
       }
 
-      function setupExamFromInputs() {
+      function update() {
+        if (!start) return;
+
         const phaseEl = document.getElementById('phase');
         const timeEl = document.getElementById('time');
         const infoEl = document.getElementById('info');
         const milestoneEl = document.getElementById('milestone');
-
-        const timeStr = document.getElementById('startTime').value;
-        const readingMinutes = parseInt(document.getElementById('readingMinutes').value) || 10;
-        const writingMinutes = parseInt(document.getElementById('writingMinutes').value) || 180;
-
-        const [hourStr, minuteStr] = timeStr.split(':');
-        const examStartHour = parseInt(hourStr, 10);
-        const examStartMinute = parseInt(minuteStr, 10);
-
-        const now = new Date();
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), examStartHour, examStartMinute, 0, 0);
-        readingEnd = new Date(start.getTime() + readingMinutes * 60 * 1000);
-        examEnd = new Date(readingEnd.getTime() + writingMinutes * 60 * 1000);
-        halfway = new Date(readingEnd.getTime() + (writingMinutes * 60 * 1000) / 2);
-        fifteenBeforeEnd = new Date(examEnd.getTime() - 15 * 60 * 1000);
-
-        infoEl.textContent = `Start: ${formatClockTime(start)} | Reading ends: ${formatClockTime(readingEnd)} | Halfway: ${formatClockTime(halfway)} | 15 min left: ${formatClockTime(fifteenBeforeEnd)} | Ends: ${formatClockTime(examEnd)}`;
-        
-        // Hide inputs after starting
-        document.querySelector('.container > div:first-child').style.display = 'none';
-        
-        // Start timer updates
-        update(phaseEl, timeEl, infoEl, milestoneEl);
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => update(phaseEl, timeEl, infoEl, milestoneEl), 1000);
-      }
-
-      function update(phaseEl, timeEl, infoEl, milestoneEl) {
-        if (!start) return;
 
         const now = new Date();
         let phaseText = '';
@@ -225,10 +205,13 @@
         } else if (now < examEnd) {
           phaseText = 'Exam in progress';
           remainingMs = examEnd - now;
-          if (now >= fifteenBeforeEnd) milestoneText = '15 minutes remaining';
-          else if (now >= halfway) milestoneText = 'Halfway through the exam';
+          if (now >= fifteenBeforeEnd) {
+            milestoneText = '⏰ 15 minutes remaining';
+          } else if (now >= halfway) {
+            milestoneText = '✓ Halfway through the exam';
+          }
         } else {
-          phaseText = 'Exam finished';
+          phaseText = '✓ Exam finished';
           remainingMs = 0;
         }
 
@@ -237,11 +220,47 @@
         milestoneEl.textContent = milestoneText;
       }
 
-      // Button click handler (safe now - DOM is loaded)
+      function setupExamFromInputs() {
+        const timeStr = document.getElementById('startTime').value;
+        const readingMinutes = parseInt(document.getElementById('readingMinutes').value) || 10;
+        const writingMinutes = parseInt(document.getElementById('writingMinutes').value) || 180;
+
+        if (!timeStr) {
+          alert('Please enter a start time');
+          return;
+        }
+
+        const [hourStr, minuteStr] = timeStr.split(':');
+        const examStartHour = parseInt(hourStr, 10);
+        const examStartMinute = parseInt(minuteStr, 10);
+
+        const now = new Date();
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), examStartHour, examStartMinute, 0, 0);
+        readingEnd = new Date(start.getTime() + readingMinutes * 60 * 1000);
+        examEnd = new Date(readingEnd.getTime() + writingMinutes * 60 * 1000);
+        halfway = new Date(readingEnd.getTime() + (writingMinutes * 60 * 1000) / 2);
+        fifteenBeforeEnd = new Date(examEnd.getTime() - 15 * 60 * 1000);
+
+        const infoEl = document.getElementById('info');
+        infoEl.textContent = `Start: ${formatClockTime(start)} | Reading ends: ${formatClockTime(readingEnd)} | Halfway: ${formatClockTime(halfway)} | 15 min left: ${formatClockTime(fifteenBeforeEnd)} | Ends: ${formatClockTime(examEnd)}`;
+        
+        // Hide inputs after starting
+        document.querySelector('.inputs-section').style.display = 'none';
+        
+        // Call update immediately to show initial state
+        update();
+        
+        // Clear any existing interval before starting a new one
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+        
+        // Start timer updates every second
+        timerInterval = setInterval(update, 1000);
+      }
+
+      // Button click handler
       document.getElementById('applySettings').addEventListener('click', setupExamFromInputs);
-      
-      // Initial message
-      document.getElementById('phase').textContent = "Click 'Start Exam' to begin";
     });
   </script>
 </body>
