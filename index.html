@@ -3,50 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Clock</title>
+    <title>New Exam Clock</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
+            background-color: lightpurple;
         }
-        .clock {
-            font-size: 2em;
-            color: yellow;
-            background-color: black;
-            padding: 10px;
-            display: inline-block;
-        }
-        .milestones {
+        #current-time {
             background-color: black;
             color: yellow;
             padding: 10px;
-            list-style-type: none;
-            height: 100%;
-            position: absolute;
-            left: 20px;
+            font-size: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Exam Countdown Clock</h1>
-    <div>
-        <span>Current Time: </span><span class="clock" id="clock"></span>
-    </div>
-    <ul class="milestones">
-        <li>Milestone 1</li>
-        <li>Milestone 2</li>
-        <li>Milestone 3</li>
-        <li>Milestone 4</li>
-    </ul>
+    <div id="current-time">Current Time: <span id="time-display"></span></div>
     <script>
-        function updateClock() {
+        function updateTime() {
+            const timeDisplay = document.getElementById('time-display');
             const now = new Date();
-            document.getElementById('clock').innerText = now.toUTCString();
+            const utcTime = now.toISOString().slice(0, 19).replace('T', ' ');
+            timeDisplay.textContent = utcTime;
         }
-        setInterval(updateClock, 1000);
-        updateClock();
+        setInterval(updateTime, 1000);
+        updateTime();
     </script>
 </body>
 </html>
