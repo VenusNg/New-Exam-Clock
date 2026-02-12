@@ -1,335 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exam Clock</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-    
-    .container {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      padding: 30px;
-      max-width: 500px;
-      width: 100%;
-    }
-
-    #currentClock {
-      text-align: center;
-      font-size: 28px;
-      font-weight: bold;
-      color: #667eea;
-      font-family: 'Courier New', monospace;
-      margin-bottom: 25px;
-      padding: 15px;
-      background: #f0f4ff;
-      border-radius: 8px;
-      border: 2px solid #667eea;
-    }
-    
-    h1 {
-      text-align: center;
-      color: #333;
-      margin-bottom: 30px;
-    }
-    
-    .input-group {
-      margin-bottom: 20px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #555;
-    }
-    
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      font-size: 16px;
-      transition: border-color 0.3s;
-    }
-    
-    input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-    
-    button {
-      width: 100%;
-      padding: 12px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    
-    button:hover {
-      background: linear-gradient(135deg, #5568d3 0%, #653a8f 100%);
-      transform: translateY(-2px);
-    }
-    
-    button:active {
-      transform: translateY(0);
-    }
-    
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .display {
-      margin-top: 30px;
-      text-align: center;
-      padding: 20px;
-      background: #f5f5f5;
-      border-radius: 5px;
-    }
-    
-    #phase {
-      font-size: 24px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 10px;
-    }
-    
-    #time {
-      font-size: 48px;
-      font-weight: bold;
-      color: #667eea;
-      font-family: 'Courier New', monospace;
-      margin: 20px 0;
-    }
-    
-    #milestone {
-      font-size: 18px;
-      color: #764ba2;
-      font-weight: bold;
-      margin: 15px 0;
-      min-height: 25px;
-      transition: opacity 0.3s ease-out;
-      opacity: 1;
-    }
-
-    #milestone.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-    
-    #info {
-      font-size: 12px;
-      color: #999;
-      margin-top: 15px;
-      word-break: break-word;
-      min-height: 40px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Clock</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .clock {
+            font-size: 2em;
+            color: yellow;
+            background-color: black;
+            padding: 10px;
+            display: inline-block;
+        }
+        .milestones {
+            background-color: black;
+            color: yellow;
+            padding: 10px;
+            list-style-type: none;
+            height: 100%;
+            position: absolute;
+            left: 20px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div id="currentClock">00:00:00</div>
-    
-    <h1>📝 Exam Clock</h1>
-    
-    <div class="inputs-section">
-      <div class="input-group">
-        <label for="startTime">Start Time (HH:MM):</label>
-        <input type="time" id="startTime" value="09:00">
-      </div>
-      
-      <div class="input-group">
-        <label for="readingMinutes">Reading Time (minutes):</label>
-        <input type="number" id="readingMinutes" value="10" min="0">
-      </div>
-      
-      <div class="input-group">
-        <label for="writingMinutes">Writing Time (minutes):</label>
-        <input type="number" id="writingMinutes" value="180" min="0">
-      </div>
-      
-      <button id="applySettings">Start Exam</button>
+    <h1>Exam Countdown Clock</h1>
+    <div>
+        <span>Current Time: </span><span class="clock" id="clock"></span>
     </div>
-    
-    <div class="display">
-      <div id="phase">Click 'Start Exam' to begin</div>
-      <div id="time">00:00:00</div>
-      <div id="milestone"></div>
-      <div id="info"></div>
-    </div>
-  </div>
-
-  <script>
-    let start, readingEnd, examEnd, halfway, fifteenBeforeEnd;
-    let timerInterval, clockInterval;
-    let fifteenMinuteAlertTime = null;
-
-    document.addEventListener('DOMContentLoaded', function() {
-      
-      function pad(n) {
-        return n.toString().padStart(2, '0');
-      }
-
-      function formatClockTime(date) {
-        const h = date.getHours();
-        const m = date.getMinutes();
-        return pad(h) + ':' + pad(m);
-      }
-
-      function formatDuration(ms) {
-        if (ms < 0) ms = 0;
-        const totalSeconds = Math.floor(ms / 1000);
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
-        return pad(h) + ':' + pad(m) + ':' + pad(s);
-      }
-
-      function formatFullTime(date) {
-        const h = date.getHours();
-        const m = date.getMinutes();
-        const s = date.getSeconds();
-        return pad(h) + ':' + pad(m) + ':' + pad(s);
-      }
-
-      function updateClock() {
-        const now = new Date();
-        document.getElementById('currentClock').textContent = formatFullTime(now);
-      }
-
-      function update() {
-        if (!start) return;
-
-        const phaseEl = document.getElementById('phase');
-        const timeEl = document.getElementById('time');
-        const infoEl = document.getElementById('info');
-        const milestoneEl = document.getElementById('milestone');
-
-        const now = new Date();
-        let phaseText = '';
-        let milestoneText = '';
-        let remainingMs;
-
-        if (now < start) {
-          phaseText = 'Before exam';
-          remainingMs = start - now;
-          milestoneEl.textContent = '';
-          milestoneEl.classList.remove('fade-out');
-        } else if (now < readingEnd) {
-          phaseText = 'Reading time';
-          remainingMs = readingEnd - now;
-          milestoneEl.textContent = '';
-          milestoneEl.classList.remove('fade-out');
-          fifteenMinuteAlertTime = null;
-        } else if (now < examEnd) {
-          phaseText = 'Exam in progress';
-          remainingMs = examEnd - now;
-          
-          if (now >= fifteenBeforeEnd) {
-            // First time showing the 15 minute alert
-            if (fifteenMinuteAlertTime === null) {
-              fifteenMinuteAlertTime = now.getTime();
-              milestoneEl.textContent = '⏰ 15 minutes remaining';
-              milestoneEl.classList.remove('fade-out');
-            } else {
-              // Check if 60 seconds have passed since alert first shown
-              const secondsElapsed = (now.getTime() - fifteenMinuteAlertTime) / 1000;
-              if (secondsElapsed < 60) {
-                milestoneEl.textContent = '⏰ 15 minutes remaining';
-                milestoneEl.classList.remove('fade-out');
-              } else {
-                milestoneEl.classList.add('fade-out');
-              }
-            }
-          } else if (now >= halfway) {
-            milestoneEl.textContent = '✓ Halfway through the exam';
-            milestoneEl.classList.remove('fade-out');
-          } else {
-            milestoneEl.textContent = '';
-            milestoneEl.classList.remove('fade-out');
-            fifteenMinuteAlertTime = null;
-          }
-        } else {
-          phaseText = '✓ Exam finished';
-          remainingMs = 0;
-          milestoneEl.textContent = '';
-          milestoneEl.classList.remove('fade-out');
+    <ul class="milestones">
+        <li>Milestone 1</li>
+        <li>Milestone 2</li>
+        <li>Milestone 3</li>
+        <li>Milestone 4</li>
+    </ul>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toUTCString();
         }
-
-        phaseEl.textContent = phaseText;
-        timeEl.textContent = formatDuration(remainingMs);
-      }
-
-      function setupExamFromInputs() {
-        const timeStr = document.getElementById('startTime').value;
-        const readingMinutes = parseInt(document.getElementById('readingMinutes').value) || 10;
-        const writingMinutes = parseInt(document.getElementById('writingMinutes').value) || 180;
-
-        if (!timeStr) {
-          alert('Please enter a start time');
-          return;
-        }
-
-        const [hourStr, minuteStr] = timeStr.split(':');
-        const examStartHour = parseInt(hourStr, 10);
-        const examStartMinute = parseInt(minuteStr, 10);
-
-        const now = new Date();
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), examStartHour, examStartMinute, 0, 0);
-        readingEnd = new Date(start.getTime() + readingMinutes * 60 * 1000);
-        examEnd = new Date(readingEnd.getTime() + writingMinutes * 60 * 1000);
-        halfway = new Date(readingEnd.getTime() + (writingMinutes * 60 * 1000) / 2);
-        fifteenBeforeEnd = new Date(examEnd.getTime() - 15 * 60 * 1000);
-        fifteenMinuteAlertTime = null;
-
-        const infoEl = document.getElementById('info');
-        infoEl.textContent = `Start: ${formatClockTime(start)} | Reading ends: ${formatClockTime(readingEnd)} | Halfway: ${formatClockTime(halfway)} | 15 min left: ${formatClockTime(fifteenBeforeEnd)} | Ends: ${formatClockTime(examEnd)}`;
-        
-        // Hide inputs after starting
-        document.querySelector('.inputs-section').style.display = 'none';
-        
-        // Call update immediately to show initial state
-        update();
-        
-        // Clear any existing interval before starting a new one
-        if (timerInterval) {
-          clearInterval(timerInterval);
-        }
-        
-        // Start timer updates every second
-        timerInterval = setInterval(update, 1000);
-      }
-
-      // Start the clock display immediately
-      updateClock();
-      if (clockInterval) clearInterval(clockInterval);
-      clockInterval = setInterval(updateClock, 1000);
-
-      // Button click handler
-      document.getElementById('applySettings').addEventListener('click', setupExamFromInputs);
-    });
-  </script>
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
 </body>
 </html>
