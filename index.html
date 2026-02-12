@@ -3,40 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UTC Clock</title>
+    <title>Exam Clock</title>
     <style>
-        body {
-            background-color: #f0f8ff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
-        .clock {
-            background-color: #007bff;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 2em;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #clock { font-size: 48px; }
+        #timezone, #utc { font-size: 24px; }
+        .countdown { font-size: 32px; color: red; }
     </style>
 </head>
 <body>
-    <div class="clock">
-        <div id="utc-time">Current Time (UTC): loading...</div>
-        <div id="utc-date">Current Date: loading...</div>
-    </div>
+    <h1>Exam Countdown Clock</h1>
+    <div id="current-time"></div>
+    <div id="timezone"></div>
+    <div id="utc"></div>
+    <div class="countdown" id="countdown"></div>
+
     <script>
+        // Function to update current time and countdown
         function updateClock() {
             const now = new Date();
-            const utcDateTime = now.toUTCString();
-            document.getElementById('utc-time').innerText = `Current Time (UTC): ${utcDateTime.split(' ')[4]}`;
-            document.getElementById('utc-date').innerText = `Current Date: ${utcDateTime.split(',')[0]}`;
+            const options = { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+            const currentTime = new Intl.DateTimeFormat('en-US', options).format(now);
+            const utcTime = now.toUTCString();
+
+            document.getElementById('current-time').innerText = `Current Time: ${currentTime}`;
+            document.getElementById('utc').innerText = `UTC Time: ${utcTime}`;
+            document.getElementById('timezone').innerText = `Timezone: ${options.timeZone}`;
+
+            // Countdown to a specific exam date
+            const examDate = new Date('2026-02-20T15:00:00Z');
+            const difference = examDate - now;
+
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').innerText = `Countdown to Exam: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+            // Update clock every second
+            setTimeout(updateClock, 1000);
         }
+
         updateClock();
-        setInterval(updateClock, 1000);
     </script>
 </body>
 </html>
