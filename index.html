@@ -3,30 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Exam Clock</title>
+    <title>UTC Clock</title>
     <style>
         body {
-            background-color: lightpurple;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
         }
-        #current-time {
-            background-color: black;
-            color: yellow;
-            padding: 10px;
-            font-size: 20px;
+        .clock {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 2em;
         }
     </style>
 </head>
 <body>
-    <div id="current-time">Current Time: <span id="time-display"></span></div>
+    <div class="clock">
+        <div id="utc-time">Current Time (UTC): loading...</div>
+        <div id="utc-date">Current Date: loading...</div>
+    </div>
     <script>
-        function updateTime() {
-            const timeDisplay = document.getElementById('time-display');
+        function updateClock() {
             const now = new Date();
-            const utcTime = now.toISOString().slice(0, 19).replace('T', ' ');
-            timeDisplay.textContent = utcTime;
+            const utcDateTime = now.toUTCString();
+            document.getElementById('utc-time').innerText = `Current Time (UTC): ${utcDateTime.split(' ')[4]}`;
+            document.getElementById('utc-date').innerText = `Current Date: ${utcDateTime.split(',')[0]}`;
         }
-        setInterval(updateTime, 1000);
-        updateTime();
+        updateClock();
+        setInterval(updateClock, 1000);
     </script>
 </body>
 </html>
