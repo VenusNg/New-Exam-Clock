@@ -18,6 +18,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
     }
     
     .container {
@@ -26,7 +27,20 @@
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
       padding: 30px;
       max-width: 500px;
-      width: 90%;
+      width: 100%;
+    }
+
+    #currentClock {
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      color: #667eea;
+      font-family: 'Courier New', monospace;
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      border: 2px solid #667eea;
     }
     
     h1 {
@@ -116,6 +130,13 @@
       font-weight: bold;
       margin: 15px 0;
       min-height: 25px;
+      transition: opacity 0.3s ease-out;
+      opacity: 1;
+    }
+
+    #milestone.fade-out {
+      opacity: 0;
+      pointer-events: none;
     }
     
     #info {
@@ -129,6 +150,8 @@
 </head>
 <body>
   <div class="container">
+    <div id="currentClock">00:00:00</div>
+    
     <h1>📝 Exam Clock</h1>
     
     <div class="inputs-section">
@@ -160,7 +183,8 @@
 
   <script>
     let start, readingEnd, examEnd, halfway, fifteenBeforeEnd;
-    let timerInterval;
+    let timerInterval, clockInterval;
+    let fifteenMinuteAlertTime = null;
 
     document.addEventListener('DOMContentLoaded', function() {
       
@@ -183,6 +207,18 @@
         return pad(h) + ':' + pad(m) + ':' + pad(s);
       }
 
+      function formatFullTime(date) {
+        const h = date.getHours();
+        const m = date.getMinutes();
+        const s = date.getSeconds();
+        return pad(h) + ':' + pad(m) + ':' + pad(s);
+      }
+
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('currentClock').textContent = formatFullTime(now);
+      }
+
       function update() {
         if (!start) return;
 
@@ -199,25 +235,51 @@
         if (now < start) {
           phaseText = 'Before exam';
           remainingMs = start - now;
+          milestoneEl.textContent = '';
+          milestoneEl.classList.remove('fade-out');
         } else if (now < readingEnd) {
           phaseText = 'Reading time';
           remainingMs = readingEnd - now;
+          milestoneEl.textContent = '';
+          milestoneEl.classList.remove('fade-out');
+          fifteenMinuteAlertTime = null;
         } else if (now < examEnd) {
           phaseText = 'Exam in progress';
           remainingMs = examEnd - now;
+          
           if (now >= fifteenBeforeEnd) {
-            milestoneText = '⏰ 15 minutes remaining';
+            // First time showing the 15 minute alert
+            if (fifteenMinuteAlertTime === null) {
+              fifteenMinuteAlertTime = now.getTime();
+              milestoneEl.textContent = '⏰ 15 minutes remaining';
+              milestoneEl.classList.remove('fade-out');
+            } else {
+              // Check if 60 seconds have passed since alert first shown
+              const secondsElapsed = (now.getTime() - fifteenMinuteAlertTime) / 1000;
+              if (secondsElapsed < 60) {
+                milestoneEl.textContent = '⏰ 15 minutes remaining';
+                milestoneEl.classList.remove('fade-out');
+              } else {
+                milestoneEl.classList.add('fade-out');
+              }
+            }
           } else if (now >= halfway) {
-            milestoneText = '✓ Halfway through the exam';
+            milestoneEl.textContent = '✓ Halfway through the exam';
+            milestoneEl.classList.remove('fade-out');
+          } else {
+            milestoneEl.textContent = '';
+            milestoneEl.classList.remove('fade-out');
+            fifteenMinuteAlertTime = null;
           }
         } else {
           phaseText = '✓ Exam finished';
           remainingMs = 0;
+          milestoneEl.textContent = '';
+          milestoneEl.classList.remove('fade-out');
         }
 
         phaseEl.textContent = phaseText;
         timeEl.textContent = formatDuration(remainingMs);
-        milestoneEl.textContent = milestoneText;
       }
 
       function setupExamFromInputs() {
@@ -240,6 +302,7 @@
         examEnd = new Date(readingEnd.getTime() + writingMinutes * 60 * 1000);
         halfway = new Date(readingEnd.getTime() + (writingMinutes * 60 * 1000) / 2);
         fifteenBeforeEnd = new Date(examEnd.getTime() - 15 * 60 * 1000);
+        fifteenMinuteAlertTime = null;
 
         const infoEl = document.getElementById('info');
         infoEl.textContent = `Start: ${formatClockTime(start)} | Reading ends: ${formatClockTime(readingEnd)} | Halfway: ${formatClockTime(halfway)} | 15 min left: ${formatClockTime(fifteenBeforeEnd)} | Ends: ${formatClockTime(examEnd)}`;
@@ -258,6 +321,11 @@
         // Start timer updates every second
         timerInterval = setInterval(update, 1000);
       }
+
+      // Start the clock display immediately
+      updateClock();
+      if (clockInterval) clearInterval(clockInterval);
+      clockInterval = setInterval(updateClock, 1000);
 
       // Button click handler
       document.getElementById('applySettings').addEventListener('click', setupExamFromInputs);
