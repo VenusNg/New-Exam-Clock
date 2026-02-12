@@ -1,0 +1,95 @@
+<script>
+  let start, readingEnd, examEnd, halfway, fifteenBeforeEnd;
+  let timerInterval;
+
+  // Wait for page to fully load
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    function pad(n) {
+      return n.toString().padStart(2, '0');
+    }
+
+    function formatClockTime(date) {
+      const h = date.getHours();
+      const m = date.getMinutes();
+      return pad(h) + ':' + pad(m);
+    }
+
+    function formatDuration(ms) {
+      if (ms < 0) ms = 0;
+      const totalSeconds = Math.floor(ms / 1000);
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      return pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+
+    function setupExamFromInputs() {
+      const phaseEl = document.getElementById('phase');
+      const timeEl = document.getElementById('time');
+      const infoEl = document.getElementById('info');
+      const milestoneEl = document.getElementById('milestone');
+
+      const timeStr = document.getElementById('startTime').value;
+      const readingMinutes = parseInt(document.getElementById('readingMinutes').value) || 10;
+      const writingMinutes = parseInt(document.getElementById('writingMinutes').value) || 180;
+
+      const [hourStr, minuteStr] = timeStr.split(':');
+      const examStartHour = parseInt(hourStr, 10);
+      const examStartMinute = parseInt(minuteStr, 10);
+
+      const now = new Date();
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), examStartHour, examStartMinute, 0, 0);
+      readingEnd = new Date(start.getTime() + readingMinutes * 60 * 1000);
+      examEnd = new Date(readingEnd.getTime() + writingMinutes * 60 * 1000);
+      halfway = new Date(readingEnd.getTime() + (writingMinutes * 60 * 1000) / 2);
+      fifteenBeforeEnd = new Date(examEnd.getTime() - 15 * 60 * 1000);
+
+      infoEl.textContent = `Start: ${formatClockTime(start)} | Reading ends: ${formatClockTime(readingEnd)} | Halfway: ${formatClockTime(halfway)} | 15 min left: ${formatClockTime(fifteenBeforeEnd)} | Ends: ${formatClockTime(examEnd)}`;
+      
+      // Hide inputs after starting
+      document.querySelector('.container > div:first-child').style.display = 'none';
+      
+      // Start timer updates
+      update(phaseEl, timeEl, infoEl, milestoneEl);
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => update(phaseEl, timeEl, infoEl, milestoneEl), 1000);
+    }
+
+    function update(phaseEl, timeEl, infoEl, milestoneEl) {
+      if (!start) return;
+
+      const now = new Date();
+      let phaseText = '';
+      let milestoneText = '';
+      let remainingMs;
+
+      if (now < start) {
+        phaseText = 'Before exam';
+        remainingMs = start - now;
+      } else if (now < readingEnd) {
+        phaseText = 'Reading time';
+        remainingMs = readingEnd - now;
+      } else if (now < examEnd) {
+        phaseText = 'Exam in progress';
+        remainingMs = examEnd - now;
+        if (now >= fifteenBeforeEnd) milestoneText = '15 minutes remaining';
+        else if (now >= halfway) milestoneText = 'Halfway through the exam';
+      } else {
+        phaseText = 'Exam finished';
+        remainingMs = 0;
+      }
+
+      phaseEl.textContent = phaseText;
+      timeEl.textContent = formatDuration(remainingMs);
+      milestoneEl.textContent = milestoneText;
+    }
+
+    // Button click handler (safe now - DOM is loaded)
+    document.getElementById('applySettings').addEventListener('click', setupExamFromInputs);
+    
+    // Initial message
+    document.getElementById('phase').textContent = "Click 'Start exam' to begin";
+  });
+</script>
+
